@@ -1,0 +1,38 @@
+# Publica la pizarra en AWS (S3 + CloudFront) en cada push a main.
+# URL: https://jugadasquart.vromero.es (CNAME en IONOS a d23a188u0rifdl.cloudfront.net; bucket
+# jugadas-quart-b-web-781994662521, distribución E30KNU6HXQ7NSA).
+name: Publicar en AWS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-aws
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      WEB_BUCKET: jugadas-quart-b-web-781994662521
+      SITE_URL: https://d23a188u0rifdl.cloudfront.net
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::781994662521:role/jugadas-quart-b-github-deploy
+          aws-region: eu-north-1
+
+      - name: Subir la web a S3
+        run: aws s3 cp index.html "s3://$WEB_BUCKET/index.html" --cache-control "public, max-age=0, must-revalidate" --only-show-errors
+
+      - name: Comprobar que AWS sirve este commit
+        run: |
+          sleep 2
+          curl -fsS "$SITE_URL/" | cmp - index.html
