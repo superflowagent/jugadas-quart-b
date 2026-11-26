@@ -200,13 +200,13 @@ const PLAYS=[
   {t:"Lanza {L} en carrera.",m:{L:[9.3,8.6]},shot:[10.9,-0.3],d:900}
  ]},
  {id:"espana",code:"España",name:"Extremo a doble, el pivote gana la posición al 1",steps:[
-  {t:"{C} pasa a {L}.",pass:["C","L"],d:800},
-  {t:"{L} avanza con balón hacia {E}.",m:{L:[3.0,8.3]},d:1100},
-  {t:"{L} pasa a {E} y se va hacia el centro; {C} va a ocupar el puesto de {L}.",pass:["L","E"],m:{L:[6.6,11.4,3.6,10.6],C:[7.0,11.0,8.6,10.4],P:[7.6,6.25]},d:1500},
-  {t:"{E} pasa a {C}, que recibe en el puesto de {L}, y se va a doble pivote. {P} se desplaza hacia el 1.",pass:["E","C"],m:{C:[4.4,10.2],L:[9.6,11.3],E:[6.3,6.0,2.2,4.6],P:[4.6,4.9]},d:1600},
-  {t:"{C} ataca hacia el 2; {P} gana la posición al 1.",m:{C:[4.7,7.7],P:[3.4,4.0],E:[9.2,6.4]},d:1400},
-  {t:"{C} pasa a {P}.",pass:["C","P"],m:{C:[4.6,7.4]},d:800},
-  {t:"Lanza {P}.",m:{P:[4.0,3.5]},shot:[10.9,-0.3],d:1000}
+  {t:"{C} pasa a {L}; {P} empieza ya a circular hacia el lado de {L}.",pass:["C","L"],m:{P:[9.1,6.35]},d:800},
+  {t:"{L} avanza con balón hasta pegarse a {E}; {P} sigue circulando por los 6 metros.",m:{L:[2.3,5.9],P:[7.0,6.15],C:[9.2,11.2]},d:1300},
+  {t:"{L} da el balón en corto a {E} y se va hacia el centro; {C} viene hacia {E}.",pass:["L","E"],pw:[0.05,0.3],m:{L:[6.0,11.9,2.6,10.4],C:[5.4,9.6,8.2,10.6],P:[5.5,5.5]},d:1500},
+  {t:"{C} se acerca a {E} y recibe en corto; {P} llega junto al 1.",pass:["E","C"],pw:[0.45,0.4],m:{C:[3.1,7.6,3.8,9.2],E:[1.4,2.6],L:[9.4,11.4],P:[3.8,4.4]},d:1200},
+  {t:"{C} ataca hacia el 2; {P} gana la posición al 1 y {E} se va a doble pivote.",m:{C:[4.3,7.0],P:[3.4,4.0],E:[6.3,6.0,2.0,6.0]},d:1300},
+  {t:"{C} pasa a {P}.",pass:["C","P"],m:{C:[4.4,6.9],E:[8.2,6.3]},d:700},
+  {t:"Lanza {P}.",m:{P:[4.0,3.5],E:[9.2,6.4]},shot:[10.9,-0.3],d:1000}
  ]},
  {id:"j60",code:"60",name:"Permuta central–lateral",steps:[
   {t:"{C} pasa a {Lc} y arranca hacia el puesto de {L}; {L} arranca hacia el centro.",pass:["C","Lc"],m:{C:[8.6,10.8],L:[5.4,11.3],Lc:[15.4,9.9]},d:1000},
