@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jugadas BM Quart B</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Pizarra de entrenador: marco azul marino del club, pista clara en el centro, controles debajo */
+  color-scheme: dark;
+  --navy:#0a1c36;
+  --panel:#122b50;
+  --panel-2:#1a3a69;
+  --line:#2b4d80;
+  --ink:#eef4fc;
+  --ink-soft:#a9bcd8;
+  --attack:#1554c9;
+  --defense:#d32f2f;
+  --ball:#f59e0b;
+  --floor:#e6edf3;
+  --area:#f4dfa0;
+  --court-line:#1d2f4a;
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"Barlow","Segoe UI",Roboto,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--navy);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.4}
+.wrap{--courtw:calc((100vh - 150px) * 1.44);max-width:1500px;margin:0 auto;padding:12px 16px 24px;display:flex;flex-direction:column;gap:10px}
+header{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+h1{font-family:var(--display);font-weight:700;font-size:24px;line-height:1.1;margin:0;white-space:nowrap}
+.club{font-family:var(--display);font-weight:600;letter-spacing:.12em;text-transform:uppercase;font-size:13px;color:var(--ink-soft);text-align:right}
+button:focus-visible,input:focus-visible{outline:3px solid var(--ball);outline-offset:2px}
+
+/* Tres columnas: jugadas | pista con controles | pasos */
+.layout{display:grid;grid-template-columns:200px minmax(0,min(var(--courtw),100%)) minmax(230px,1fr);gap:14px;align-items:start}
+.plays{display:flex;flex-direction:column;gap:6px}
+.play-btn{appearance:none;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:9px;padding:7px 11px;text-align:left;cursor:pointer;font-family:var(--body);display:flex;flex-direction:column;min-width:0}
+.play-btn .code{font-family:var(--display);font-weight:700;font-size:20px;line-height:1.1}
+.play-btn .name{font-size:13px;line-height:1.25;color:var(--ink-soft)}
+.play-btn:hover{background:var(--panel-2)}
+.play-btn[aria-pressed="true"]{background:var(--ink);color:var(--navy);border-color:var(--ink)}
+.play-btn[aria-pressed="true"] .name{color:#3b5174}
+
+.stage{min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px}
+svg#court{display:block;width:100%;height:auto;border-radius:7px;background:#27456f}
+.transport{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:8px 2px 0}
+.ico{appearance:none;flex:none;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--panel-2);color:var(--ink);cursor:pointer;display:grid;place-items:center;padding:0}
+.ico svg{width:18px;height:18px;fill:currentColor;display:block}
+.ico.primary{background:var(--ball);border-color:var(--ball);color:#1b1300;width:44px;height:44px}
+.ico.primary svg{width:22px;height:22px}
+.ico:hover{filter:brightness(1.12)}
+input[type=range]{flex:1 1 120px;min-width:100px;accent-color:var(--ball);height:28px;margin:0}
+.seg{display:inline-flex;flex:none;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.transport .seg:last-child{margin-left:auto}
+.seg .sm{display:none}
+.seg button{appearance:none;border:0;background:var(--navy);color:var(--ink);padding:7px 11px;font-family:var(--body);font-weight:600;font-size:14px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--navy)}
+
+ol.steps{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:2px;counter-reset:s;min-width:0}
+ol.steps li{counter-increment:s;display:flex;gap:9px;padding:6px 9px;border-radius:8px;color:var(--ink-soft);font-size:14.5px;cursor:pointer}
+ol.steps li::before{content:counter(s);font-family:var(--display);font-weight:700;min-width:1em;text-align:center}
+ol.steps li:hover{background:var(--panel)}
+ol.steps li:focus-visible{outline:3px solid var(--ball);outline-offset:1px}
+ol.steps li.on{background:var(--panel-2);color:var(--ink)}
+
+/* Ancho medio: los pasos bajan debajo de la pista */
+@media (max-width:1040px){
+  .layout{grid-template-columns:190px minmax(0,1fr)}
+  .stage{max-width:var(--courtw)}
+  ol.steps{grid-column:2}
+}
+/* Móvil: jugadas en fila deslizable, pista y pasos a todo el ancho */
+@media (max-width:700px){
+  .wrap{padding:10px 12px 20px}
+  h1{font-size:20px}
+  .club{font-size:10.5px;letter-spacing:.05em;white-space:nowrap}
+  h1{font-size:19px}
+  .layout{grid-template-columns:minmax(0,1fr)}
+  ol.steps{grid-column:auto}
+  .plays{flex-direction:row;overflow-x:auto;padding-bottom:4px;scroll-snap-type:x proximity}
+  .play-btn{flex:0 0 auto;max-width:180px;scroll-snap-align:start}
+  .play-btn .name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+}
+/* Móvil en horizontal: sin cabecera ni pasos. Jugadas a la izquierda y controles a la derecha
+   ocupan toda la altura y el ancho sobrante; la pista usa toda la altura. */
+@media (orientation:landscape) and (max-height:520px){
+  .wrap{--vh:100vh;--courtw:calc((var(--vh) - 28px) * 1.44);--side:clamp(106px,calc((100vw - var(--courtw) - 56px) / 2),200px);padding:5px 10px}
+  @supports (height:100dvh){.wrap{--vh:100dvh}}
+  header,ol.steps{display:none}
+  .layout{grid-template-columns:var(--side) minmax(0,calc(var(--courtw) + var(--side) + 20px));gap:8px;justify-content:center;align-items:stretch}
+  .plays{flex-direction:column;overflow:visible;padding:0;gap:4px;container-type:inline-size}
+  .play-btn{flex:1 1 0;max-width:none;padding:2px 9px;border-radius:7px;justify-content:center}
+  .play-btn .code{font-size:16px}
+  .play-btn .name{display:none;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  @container (min-width:135px){.play-btn .name{display:block}}
+  .stage{max-width:none;padding:5px;display:grid;grid-template-columns:minmax(0,1fr) var(--side);gap:8px;align-items:start}
+  .transport{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;align-content:flex-start;gap:10px 8px;padding:6px 3px 0 0}
+  .ico{width:40px;height:40px}.ico.primary{width:50px;height:50px}
+  input[type=range]{flex:0 0 100%;min-width:0;height:24px}
+  .transport .seg,.transport .seg:last-child{flex:0 0 100%;margin:0}
+  .seg button{flex:1;padding:8px 2px;font-size:12.5px}
+  .seg .lg{display:none}.seg .sm{display:inline}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Pizarra de jugadas</h1>
+    <div class="club">Club Balonmano Quart B</div>
+  </header>
+
+  <div class="layout">
+    <nav class="plays" id="plays" aria-label="Jugadas"></nav>
+
+    <section class="stage">
+        <svg id="court" viewBox="-0.4 -1.15 20.8 14.45" role="img" aria-label="Media pista de balonmano con la jugada animada">
+          <defs>
+            <marker id="arr" markerUnits="userSpaceOnUse" markerWidth="0.7" markerHeight="0.7" refX="0.5" refY="0.35" orient="auto"><path d="M0 0 L0.7 0.35 L0 0.7 Z" fill="#1554c9"/></marker>
+            <pattern id="net" width="0.3" height="0.3" patternUnits="userSpaceOnUse"><path d="M0 0H0.3M0 0V0.3" stroke="#8a97a8" stroke-width="0.03" fill="none"/></pattern>
+          </defs>
+          <rect x="0" y="0" width="20" height="13" fill="#e6edf3"/>
+          <path d="M2.5 0 A6 6 0 0 0 8.5 6 L11.5 6 A6 6 0 0 0 17.5 0 Z" fill="#f4dfa0" stroke="#1d2f4a" stroke-width="0.09"/>
+          <path d="M0 2.96 A9 9 0 0 0 8.5 9 L11.5 9 A9 9 0 0 0 20 2.96" fill="none" stroke="#1d2f4a" stroke-width="0.08" stroke-dasharray="0.3 0.3"/>
+          <path d="M9.5 7H10.5M9.85 4H10.15" stroke="#1d2f4a" stroke-width="0.09"/>
+          <rect x="0" y="0" width="20" height="13" fill="none" stroke="#1d2f4a" stroke-width="0.1"/>
+          <rect x="8.5" y="-0.9" width="3" height="0.9" fill="#fff"/>
+          <rect x="8.5" y="-0.9" width="3" height="0.9" fill="url(#net)" stroke="#c62828" stroke-width="0.12"/>
+          <g id="trails"></g>
+          <g id="players"></g>
+          <circle id="ball" r="0.27" fill="#f59e0b" stroke="#3a2500" stroke-width="0.07"/>
+        </svg>
+        <div class="transport">
+          <button type="button" class="ico primary" id="playBtn" aria-label="Pausa"></button>
+          <button type="button" class="ico" id="stopBtn" aria-label="Stop" title="Stop"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg></button>
+          <input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Avance de la jugada">
+          <div class="seg" role="group" aria-label="Lado de la jugada">
+            <button type="button" id="sideIzq" aria-pressed="true" aria-label="Izquierda"><span class="lg">Izquierda</span><span class="sm">Izq.</span></button>
+            <button type="button" id="sideDer" aria-pressed="false" aria-label="Derecha"><span class="lg">Derecha</span><span class="sm">Der.</span></button>
+          </div>
+          <div class="seg" role="group" aria-label="Velocidad">
+            <button type="button" data-speed="0.35" aria-pressed="false">Lenta</button>
+            <button type="button" data-speed="1" aria-pressed="true">Normal</button>
+          </div>
+        </div>
+    </section>
+
+    <ol class="steps" id="steps" aria-label="Pasos de la jugada"></ol>
+  </div>
+</div>
+
+<script>
+/* Coordenadas en metros, media pista de 20 m de ancho, portería arriba.
+   Todas las jugadas están descritas hacia el lado IZQUIERDO; el derecho es el espejo.
+   Roles: E extremo del lado, L lateral del lado, C central, P pivote,
+          Lc lateral contrario, Ec extremo contrario. D1..D6 defensores de izquierda a derecha. */
+const BASE={E:[1,1.6],L:[4.2,10.3],C:[10,11.5],Lc:[15.8,10.3],Ec:[19,1.6],P:[10,6.35],
+  D1:[2.6,3.3],D2:[5,5.7],D3:[8.3,6.9],D4:[11.7,6.9],D5:[15,5.7],D6:[17.4,3.3],GK:[10,0.9]};
+
+/* Paso: t texto, d duración ms, m movimientos {rol:[x,y] o [x,y,cx,cy] con punto de control},
+   pass:[de,a], shot:[x,y] punto de la portería */
+const PLAYS=[
+ {id:"j41",code:"41",name:"Cruce central–lateral",steps:[
+  {t:"{C} ataca con balón el intervalo del lado de {L}; {P} se va entre el 3 y el 2 del lado contrario.",m:{C:[7.6,9.6],L:[5.2,10.8],P:[11.8,6.4]}},
+  {t:"{L} cruza por detrás de {C} y recibe en carrera.",m:{L:[9.4,10.4,7.2,11.6],C:[6.4,8.8],P:[13.3,6.2]},pass:["C","L"]},
+  {t:"Lanza {L} en carrera desde el centro; {C} ocupa el puesto de {L}.",m:{L:[10.5,8.9],C:[4.6,9.9]},shot:[9.1,-0.3],d:1000}
+ ]},
+ {id:"j41mas",code:"41+",name:"Falsa permuta",holder:"L",steps:[
+  {t:"{C} arranca hacia la zona de {L}, metiéndose en 9 metros.",m:{C:[7.4,10.1],L:[4.5,10.8]},d:1000},
+  {t:"{L} pasa a {C}, que recibe atacando casi en 9 metros, como si fuera el lateral.",pass:["L","C"],m:{C:[5.9,9.1],L:[5.4,11.6]},d:1000},
+  {t:"{C} amaga el pase a {Lc}; {L} corre por detrás de {C}.",m:{C:[5.5,8.7],L:[7.8,11.5,6.4,12.1],Lc:[15.1,9.8],D3:[8.9,6.9],D4:[12.5,6.9],D5:[15.5,5.4]},d:1200},
+  {t:"{L} recibe de {C} en carrera hacia el centro.",m:{L:[9.8,9.8,9.6,11.4],C:[5.2,8.9]},pass:["C","L"],d:1200},
+  {t:"Lanza {L} desde el centro.",m:{L:[10.0,8.7]},shot:[10.9,-0.3],d:1100}
+ ]},
+ {id:"j42",code:"42",name:"Cruce lateral–extremo, extremo a doble",steps:[
+  {t:"{C} pasa a {L}.",pass:["C","L"],d:800},
+  {t:"{L} ataca hacia fuera y {E} sale de la esquina.",m:{L:[3.0,8.2],E:[1.5,6.6]}},
+  {t:"Cruce: {E} pasa por detrás de {L} y recibe.",m:{E:[5.2,9.8,2.6,9.8],L:[2.1,6.6],C:[8.6,11.0]},pass:["L","E"]},
+  {t:"{E} pasa a {C} antes de llegar a su altura y sigue corriendo.",m:{E:[7.4,11.7,5.8,11.4],C:[7.3,10.4],L:[1.4,3.6]},pass:["E","C"],d:1200},
+  {t:"{E} pasa por detrás de {C} y entra a doble: {E} tras el 3 de su lado y {P} tras el otro 3. {C} aguanta el balón.",m:{E:[7.6,6.15,10.6,11.2],C:[7.6,9.9],P:[12.4,6.15],L:[1.1,2.0]},d:2300},
+  {t:"Con {E} ya colocado, {C} fija al 3 y le pasa el balón.",m:{C:[8.5,9.0]},pass:["C","E"]},
+  {t:"Lanza {E} desde los 6 metros.",m:{E:[8.0,5.5]},shot:[9.1,-0.3],d:1100}
+ ]},
+ {id:"j43larga",code:"43 larga",name:"Cruce central–pivote",steps:[
+  {t:"{C} empieza a atacar hacia el lado de {L}; {P} sale de los 6 metros por ese mismo lado.",m:{C:[9.4,10.4],P:[7.2,9.5,8.0,7.2]},d:1300},
+  {t:"Cruce: {C} va hacia fuera y {P} pasa por detrás en sentido contrario y recibe.",m:{C:[7.6,9.0],P:[10.6,10.4,8.6,11.7]},pass:["C","P"],pw:[0.42,0.25],d:1200},
+  {t:"Balón largo de {P} a {Lc}; {L} arranca hacia el centro.",m:{Lc:[14.9,9.6],P:[11.4,9.0],C:[6.4,9.2],L:[5.2,11.2]},pass:["P","Lc"],d:1000},
+  {t:"{Lc} fija y pasa a {L}, que llega en carrera atacando hacia el centro.",m:{Lc:[14.3,8.9],L:[8.6,10.0,6.6,11.8],P:[11.0,6.5],C:[5.2,9.9]},pass:["Lc","L"],d:1300},
+  {t:"Lanza {L} en carrera desde el centro.",m:{L:[9.5,8.8]},shot:[9.1,-0.3],d:900}
+ ]},
+ {id:"j43corta",code:"43 corta",name:"Amago de cruce central–pivote",steps:[
+  {t:"{C} empieza a atacar hacia el lado de {L}; {P} sale de los 6 metros por ese mismo lado.",m:{C:[9.4,10.4],P:[7.2,9.5,8.0,7.2]},d:1300},
+  {t:"Amago de cruce: {C} va hacia fuera y {P} pasa por detrás en sentido contrario, pero {C} no suelta el balón.",m:{C:[7.6,9.0],P:[10.6,10.4,8.6,11.7]},d:1200},
+  {t:"{C} pasa rápido a {L}.",m:{C:[7.3,8.3],L:[5.8,10.0],P:[11.2,9.8]},pass:["C","L"],d:700},
+  {t:"{L} ataca hacia el centro; {C} sigue a doble pivote y {P} vuelve a los 6 metros.",m:{L:[8.6,9.4],C:[7.0,6.3],P:[10.9,6.5]},d:1200},
+  {t:"Lanza {L} en carrera.",m:{L:[9.3,8.6]},shot:[10.9,-0.3],d:900}
+ ]},
+ {id:"espana",code:"España",name:"Extremo a doble, el pivote gana la posición al 1",steps:[
+  {t:"{C} pasa a {L}.",pass:["C","L"],d:800},
+  {t:"{L} avanza con balón hacia {E}.",m:{L:[3.0,8.3]},d:1100},
+  {t:"{L} pasa a {E} y se va hacia el centro; {C} va a ocupar el puesto de {L}.",pass:["L","E"],m:{L:[6.6,11.4,3.6,10.6],C:[7.0,11.0,8.6,10.4],P:[7.6,6.25]},d:1500},
+  {t:"{E} pasa a {C}, que recibe en el puesto de {L}, y se va a doble pivote. {P} se desplaza hacia el 1.",pass:["E","C"],m:{C:[4.4,10.2],L:[9.6,11.3],E:[6.3,6.0,2.2,4.6],P:[4.6,4.9]},d:1600},
+  {t:"{C} ataca hacia el 2; {P} gana la posición al 1.",m:{C:[4.7,7.7],P:[3.4,4.0],E:[9.2,6.4]},d:1400},
+  {t:"{C} pasa a {P}.",pass:["C","P"],m:{C:[4.6,7.4]},d:800},
+  {t:"Lanza {P}.",m:{P:[4.0,3.5]},shot:[10.9,-0.3],d:1000}
+ ]},
+ {id:"j60",code:"60",name:"Permuta central–lateral",steps:[
+  {t:"{C} pasa a {Lc} y arranca hacia el puesto de {L}; {L} arranca hacia el centro.",pass:["C","Lc"],m:{C:[8.6,10.8],L:[5.4,11.3],Lc:[15.4,9.9]},d:1000},
+  {t:"Permuta sin balón: {L} va al centro y {C} ocupa el puesto de {L}.",m:{L:[8.6,11.2,7.0,12.0],C:[5.0,10.0,6.8,10.0],Lc:[14.7,9.3]},d:1300},
+  {t:"{Lc} fija y pasa a {L}, que llega en carrera por el centro.",m:{L:[9.4,9.8],Lc:[14.2,8.9]},pass:["Lc","L"],d:1100},
+  {t:"Lanza {L} en carrera desde el centro.",m:{L:[9.5,8.8]},shot:[9.1,-0.3],d:900}
+ ]}
+];
+
+const ATT=["E","L","C","Lc","Ec","P"], DEF=["D1","D2","D3","D4","D5","D6"];
+const LABEL={izq:{E:"EI",L:"LI",C:"C",Lc:"LD",Ec:"ED",P:"P"},der:{E:"ED",L:"LD",C:"C",Lc:"LI",Ec:"EI",P:"P"}};
+const DLAB={D1:"1",D2:"2",D3:"3",D4:"3",D5:"2",D6:"1",GK:"PO"};
+const NS="http://www.w3.org/2000/svg";
+const HOLD=1700;
+
+let side="izq", speed=1, playing=true, cur=null, built=null, time=0, last=0, stopAt=null;
+
+function build(play){
+  const pos={}; for(const k in BASE) pos[k]=BASE[k].slice();
+  let holder=play.holder||"C", t0=0; const steps=[];
+  for(const s of play.steps){
+    const st={t:s.t,m:s.m||{},pass:s.pass,pw:s.pw||[0.08,0.72],shot:s.shot,d:s.d||1400,t0,holder,start:{}};
+    for(const k in pos) st.start[k]=pos[k].slice();
+    for(const r in st.m) pos[r]=[st.m[r][0],st.m[r][1]];
+    if(s.pass) holder=s.pass[1];
+    t0+=st.d; steps.push(st);
+  }
+  /* Suavizado por jugador: solo frena o arranca si en el paso anterior o siguiente está parado */
+  steps.forEach((st,i)=>{st.ez={};
+    for(const r in st.m){
+      const a=!(i>0&&steps[i-1].m[r]), z=!(i<steps.length-1&&steps[i+1].m[r]);
+      st.ez[r]=(a?1:0)+(z?2:0);
+    }});
+  return {steps,total:t0};
+}
+const ease=u=>u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2;
+const clamp=v=>Math.max(0,Math.min(1,v));
+function along(a,tg,e){
+  if(tg.length===4){const k=1-e;return [k*k*a[0]+2*k*e*tg[2]+e*e*tg[0],k*k*a[1]+2*k*e*tg[3]+e*e*tg[1]];}
+  return [a[0]+(tg[0]-a[0])*e,a[1]+(tg[1]-a[1])*e];
+}
+function ez(k,u){
+  if(k===3) return u*u*(3-2*u)*0.6+u*0.4;      // arranca y frena
+  if(k===1) return 0.55*u+0.45*u*u;             // arranca, sigue en movimiento
+  if(k===2){const v=1-u;return 1-(0.55*v+0.45*v*v);} // viene en movimiento, frena
+  return u;                                     // movimiento continuo
+}
+function posAt(st,r,u){const tg=st.m[r];return tg?along(st.start[r],tg,ez(st.ez[r],u)):st.start[r];}
+const mx=p=>side==="der"?[20-p[0],p[1]]:p;
+
+function ballAt(st,u){
+  if(st.pass){
+    const w=clamp((u-st.pw[0])/st.pw[1]), a=posAt(st,st.pass[0],u), b=posAt(st,st.pass[1],u);
+    if(w<=0) return {held:st.pass[0]};
+    if(w>=1) return {held:st.pass[1]};
+    return {p:[a[0]+(b[0]-a[0])*w,a[1]+(b[1]-a[1])*w],from:a};
+  }
+  if(st.shot){
+    const w=clamp((u-.2)/.4), a=posAt(st,st.holder,u);
+    if(w<=0) return {held:st.holder};
+    return {p:[a[0]+(st.shot[0]-a[0])*w,a[1]+(st.shot[1]-a[1])*w],from:a,shot:true};
+  }
+  return {held:st.holder};
+}
+
+/* Defensa reactiva: bascula hacia el balón, el defensor de la zona sale al portador,
+   y todo con un pequeño retraso para que parezca una reacción. */
+function locate(t){
+  t=Math.max(0,Math.min(t,built.total-0.01)); const steps=built.steps;
+  for(let k=0;k<steps.length;k++){ if(t<steps[k].t0+steps[k].d) return {st:steps[k],u:(t-steps[k].t0)/steps[k].d}; }
+  return {st:steps[steps.length-1],u:1};
+}
+function defTarget(r,t){
+  const {st,u}=locate(t), h=posAt(st,r,u), b=ballAt(st,u);
+  const th=b.shot?b.from:(b.p||posAt(st,b.held,u));
+  const a=(10-th[0])*0.011, dx=h[0]-10, dy=h[1];
+  let x=10+dx*Math.cos(a)-dy*Math.sin(a), y=dx*Math.sin(a)+dy*Math.cos(a);
+  const vx=th[0]-x, vy=th[1]-y, d=Math.hypot(vx,vy);
+  const out=Math.max(0,Math.min(1.7,d-1.2))*clamp((4.6-d)/2.2);
+  if(d>0){x+=vx/d*out;y+=vy/d*out;}
+  const cx=x<8.5?8.5:(x>11.5?11.5:x), rr=Math.hypot(x-cx,y);
+  if(rr>0&&rr<6.5){x=cx+(x-cx)/rr*6.5;y=y/rr*6.5;}
+  return [x,y];
+}
+function defPos(r,t){
+  let x=0,y=0; const n=5;
+  for(let k=0;k<n;k++){const p=defTarget(r,t-110-k*70);x+=p[0];y+=p[1];}
+  return [x/n,y/n];
+}
+const elPlayers=document.getElementById("players"), elTrails=document.getElementById("trails"), elBall=document.getElementById("ball");
+const nodes={};
+function makePlayers(){
+  elPlayers.innerHTML="";
+  for(const r of [...DEF,"GK",...ATT]){
+    const g=document.createElementNS(NS,"g");
+    const c=document.createElementNS(NS,"circle");
+    c.setAttribute("r","0.56");
+    const isAtt=ATT.includes(r);
+    c.setAttribute("fill",isAtt?"#1554c9":(r==="GK"?"#7a1f1f":"#d32f2f"));
+    c.setAttribute("stroke","#ffffff");c.setAttribute("stroke-width","0.08");
+    const t=document.createElementNS(NS,"text");
+    t.setAttribute("text-anchor","middle");t.setAttribute("dominant-baseline","central");
+    t.setAttribute("font-size","0.5");t.setAttribute("font-weight","700");
+    t.setAttribute("font-family","Barlow, Arial, sans-serif");t.setAttribute("fill","#fff");
+    g.appendChild(c);g.appendChild(t);elPlayers.appendChild(g);nodes[r]={g,t};
+  }
+}
+function setLabels(){
+  for(const r of ATT) nodes[r].t.textContent=LABEL[side][r];
+  for(const r of [...DEF,"GK"]) nodes[r].t.textContent=DLAB[r];
+}
+function pts(arr){return arr.map(p=>{const q=mx(p);return q[0].toFixed(2)+","+q[1].toFixed(2);}).join(" ");}
+
+function render(){
+  const steps=built.steps; let i=steps.length-1, u=1;
+  if(time<built.total){ for(let k=0;k<steps.length;k++){ if(time<steps[k].t0+steps[k].d){i=k;u=(time-steps[k].t0)/steps[k].d;break;} } }
+  const st=steps[i];
+  const b=ballAt(st,u);
+  const bp=b.p||posAt(st,b.held,u);
+  for(const r in nodes){
+    let p=posAt(st,r,u);
+    if(r==="GK") p=[10+(bp[0]-10)*0.13,0.9];
+    else if(r[0]==="D") p=defPos(r,time);
+    const q=mx(p); nodes[r].g.setAttribute("transform","translate("+q[0].toFixed(3)+" "+q[1].toFixed(3)+")");
+  }
+  let q=mx(bp); if(b.held){q=[q[0]+0.45,q[1]-0.45];}
+  elBall.setAttribute("cx",q[0].toFixed(3));elBall.setAttribute("cy",q[1].toFixed(3));
+
+  let h="";
+  for(let j=0;j<=i;j++){
+    const s=steps[j], uj=j<i?1:u, e=ease(uj), op=j<i?0.38:0.85;
+    for(const r in s.m){
+      if(!ATT.includes(r)) continue;
+      const n=14, arr=[]; for(let k=0;k<=n;k++) arr.push(along(s.start[r],s.m[r],e*k/n));
+      const a=arr[0], z=arr[n]; if(Math.hypot(z[0]-a[0],z[1]-a[1])<0.5) continue;
+      h+='<polyline points="'+pts(arr)+'" fill="none" stroke="#1554c9" stroke-width="0.11" stroke-linecap="round" opacity="'+op+'" marker-end="url(#arr)"/>';
+    }
+    const bb=ballAt(s,uj);
+    if(s.pass||s.shot){
+      let a=null,z=null;
+      if(bb.p){a=bb.from;z=bb.p;}
+      else if(s.pass&&bb.held===s.pass[1]){a=posAt(s,s.pass[0],uj);z=posAt(s,s.pass[1],uj);}
+      if(a) h+='<polyline points="'+pts([a,z])+'" fill="none" stroke="'+(s.shot?"#c2410c":"#b45309")+'" stroke-width="'+(s.shot?0.13:0.09)+'" stroke-dasharray="0.28 0.22" opacity="'+op+'"/>';
+    }
+  }
+  elTrails.innerHTML="";
+
+  
+  const lis=stepsEl.children; for(let k=0;k<lis.length;k++) lis[k].classList.toggle("on",k===i);
+  if(document.activeElement!==scrub) scrub.value=Math.round(1000*Math.min(time,built.total)/built.total);
+}
+
+const capN=document.getElementById("capN"),capT=document.getElementById("capT"),stepsEl=document.getElementById("steps"),
+      scrub=document.getElementById("scrub"),playBtn=document.getElementById("playBtn"),playsEl=document.getElementById("plays");
+
+const reduce=!!(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+const ICO_PLAY='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l11-6.5a1 1 0 0 0 0-1.72l-11-6.5A1 1 0 0 0 8 5.5z"/></svg>',
+      ICO_PAUSE='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4.5" height="14" rx="1"/><rect x="13.5" y="5" width="4.5" height="14" rx="1"/></svg>';
+function setPlaying(v){playing=v;playBtn.innerHTML=v?ICO_PAUSE:ICO_PLAY;playBtn.setAttribute("aria-label",v?"Pausa":"Play");playBtn.title=v?"Pausa":"Play";if(v){last=0;requestAnimationFrame(tick);}}
+function tick(ts){
+  if(!playing) return;
+  if(last){ time+=(ts-last)*speed; }
+  last=ts;
+  if(stopAt!==null&&time>=stopAt){ time=stopAt-1; stopAt=null; render(); setPlaying(false); return; }
+  if(time>=built.total+HOLD) time=0;
+  render();
+  requestAnimationFrame(tick);
+}
+function fillSteps(){
+  stepsEl.innerHTML="";
+  cur.steps.forEach((s,i)=>{const li=document.createElement("li");li.textContent=s.t.replace(/\{(\w+)\}/g,(m,r)=>LABEL[side][r]||m);
+    li.tabIndex=0;li.setAttribute("role","button");
+    li.addEventListener("click",()=>goStep(i));
+    li.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();goStep(i);}});
+    stepsEl.appendChild(li);});
+}
+/* Tocar un paso: reproduce solo ese paso y se queda en pausa al terminarlo */
+function goStep(i){
+  const st=built.steps[i];
+  if(reduce){ stopAt=null; time=st.t0+st.d-1; setPlaying(false); render(); return; }
+  time=st.t0; stopAt=st.t0+st.d; render();
+  if(!playing) setPlaying(true);
+}
+function selectPlay(id,keepHash){
+  const p=PLAYS.find(x=>x.id===id)||PLAYS[0];
+  cur=p; built=build(p); time=0; stopAt=null;
+  for(const b of playsEl.children) b.setAttribute("aria-pressed",b.dataset.id===p.id?"true":"false");
+  fillSteps();
+  if(!keepHash){try{history.replaceState(null,"","#"+p.id);}catch(e){try{location.hash=p.id;}catch(e2){}}}
+  render();
+}
+function setSide(s){
+  side=s;
+  document.getElementById("sideIzq").setAttribute("aria-pressed",s==="izq"?"true":"false");
+  document.getElementById("sideDer").setAttribute("aria-pressed",s==="der"?"true":"false");
+  setLabels(); fillSteps(); time=0; stopAt=null; render();
+}
+
+for(const p of PLAYS){
+  const b=document.createElement("button");b.type="button";b.className="play-btn";b.dataset.id=p.id;
+  b.innerHTML='<span class="code"></span><span class="name"></span>';
+  b.children[0].textContent=p.code;b.children[1].textContent=p.name;
+  b.addEventListener("click",()=>{selectPlay(p.id);if(!playing)setPlaying(true);});
+  playsEl.appendChild(b);
+}
+document.getElementById("sideIzq").addEventListener("click",()=>setSide("izq"));
+document.getElementById("sideDer").addEventListener("click",()=>setSide("der"));
+playBtn.addEventListener("click",()=>{ stopAt=null; if(!playing&&time>=built.total) time=0; setPlaying(!playing); });
+document.getElementById("stopBtn").addEventListener("click",()=>{stopAt=null;setPlaying(false);time=0;render();});
+for(const b of document.querySelectorAll("[data-speed]")){
+  b.addEventListener("click",()=>{speed=parseFloat(b.dataset.speed);
+    for(const o of document.querySelectorAll("[data-speed]")) o.setAttribute("aria-pressed",o===b?"true":"false");});
+}
+scrub.addEventListener("input",()=>{ stopAt=null; if(playing) setPlaying(false); time=built.total*scrub.value/1000; render(); });
+window.addEventListener("hashchange",()=>{const id=location.hash.slice(1); if(id&&cur&&id!==cur.id&&PLAYS.some(p=>p.id===id)) selectPlay(id,true);});
+
+makePlayers(); setLabels();
+selectPlay(location.hash.slice(1)||PLAYS[0].id,true);
+setPlaying(!reduce);
+</script>
+</body>
+</html>
